@@ -42,52 +42,37 @@ namespace SignLanguageTranslator
         }
         
 
-        Image<Bgr, Byte>[] loadImages()
+
+        Image<Bgr, Byte> LoadImage(string pathTaken)
         {
-            Image<Bgr, Byte>[] img = new Image<Bgr, byte>[filePaths.Length];
-            for (int index = 0; index < filePaths.Length; index++)
-            {
-                img[index] = new Image<Bgr, Byte>(filePaths[index]);
-            }
-            return img;
+            return new Image<Bgr, Byte>(pathTaken);
         }
 
-        Image<Gray, Byte>[] loadImagesForGray()
-        {
-            Image<Gray, Byte>[] img = new Image<Gray, byte>[filePaths.Length];
-            for (int index = 0; index < filePaths.Length; index++)
-            {
-                img[index] = new Image<Gray, Byte>(filePaths[index]);
-            }
-            return img;
-        }
+      
 
-        Image<Gray, Byte>[] useFilters(Image<Bgr, Byte>[] _img)
+        Image<Gray, Byte> useFilters(Image<Bgr, Byte> _img)
         {
             int Blue_threshold = 100;
             int Green_threshold = 0;
             int Red_threshold = 100;
-            Image<Gray, Byte>[] imgBuff = new Image<Gray, byte>[_img.Length];
-            Image<Bgr, Byte>[] img = new Image<Bgr, byte>[_img.Length];
-            imgBuff = loadImagesForGray();
+            Image<Gray, Byte> imgBuff = new Image<Gray, byte>(_img.Width, _img.Height, new Gray(255));
+            Image<Bgr, Byte> img; 
             img = _img;
 
 
-            for (int index = 0; index < filePaths.Length; index++)
-                {
-                img[index] = img[index].ThresholdBinary(new Bgr(Blue_threshold, Green_threshold, Red_threshold), new Bgr(255, 255, 255));
+            
+                img = img.ThresholdBinary(new Bgr(Blue_threshold, Green_threshold, Red_threshold), new Bgr(255, 255, 255));
 
-                CvInvoke.CvtColor(img[index], imgBuff[index], ColorConversion.Bgr2Gray);
+                CvInvoke.CvtColor(img, imgBuff, ColorConversion.Bgr2Gray);
 
-                imgBuff[index] = imgBuff[index].ThresholdBinary(new Gray(200), new Gray(255));
-                imgBuff[index] = imgBuff[index].Resize(10, 13, Inter.Cubic);
+                imgBuff = imgBuff.ThresholdBinary(new Gray(200), new Gray(255));
+                imgBuff = imgBuff.Resize(StaticDataBase.resizeXInPixels, StaticDataBase.resizeYInPixels, Inter.Cubic);
 
-            }
-            for (int index =0; index < filePaths.Length; index++)
-            {
-                _img[index].Dispose();
-                img[index].Dispose();
-            }
+            
+           
+                _img.Dispose();
+                img.Dispose();
+            
             return imgBuff;
         }
 
@@ -156,9 +141,10 @@ namespace SignLanguageTranslator
             List <AdvantedList> buffList = new List <AdvantedList>();
             List<byte[]> buffDoubleList = new List<byte[]>();
 
-            for (int index = 0; index < loadImages().Length; index++)
+
+            for (int index = 0; index < filePaths.Length; index++)
             {
-                buffDoubleList.Add(makeDoubleFromBytes(useFilters(loadImages())[index]));
+                buffDoubleList.Add(makeDoubleFromBytes(useFilters(LoadImage(filePaths[index]))));
             }
 
             if (buffList.Count == 0)

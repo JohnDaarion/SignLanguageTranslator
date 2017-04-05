@@ -19,23 +19,13 @@ namespace SignLanguageTranslator
 
         public SignToLetterClass(string selectedFotoPath)
         {
-            pathToSelectedFoto = selectedFotoPath;
+            StaticDataBase.pathToSelectedFoto = selectedFotoPath;
         }
 
-        public static string pathToFolderWithXmls = "D:\\dokumenty\\Visual Studio 2015\\Projects\\SignLanguageTranslator\\SignLanguageTranslator\\bin\\x64\\Debug\\baseData";
-        public string[] basePathsToXlms = Directory.GetFileSystemEntries(pathToFolderWithXmls);
-        public static int resizeXInPixels = 10;
-        public static int resizeYInPixels = 13;
-        public static string pathToSelectedFoto;
+        
+        public string[] basePathsToXlms = Directory.GetFileSystemEntries(StaticDataBase.pathToFolderWithXmls);
 
-        public static int lastPathTaken = 0;
-        public static double bestMatchProcent = 0;
-        public static string nameOfBestMatch = "";
-        public static int maxRotation = 50;
-        public static double maxZoom = 0.4; // range to 0-0.9 // jest to max zakres od 1
-        public static int maxReach = 32;//(int)(resizeXInPixels * resizeYInPixels * 0.01);
-        public static int amountOfThreads = 0;
-        public static int howManyThreadDoIWant = 4;
+
         //public event MyEventClass Testy;
 
 
@@ -65,38 +55,40 @@ namespace SignLanguageTranslator
 
         public void CheckItAll()
         {
-            bestMatchProcent = 0;
-            nameOfBestMatch = "";
+            StaticDataBase.bestMatchProcent = 0;
+            StaticDataBase.nameOfBestMatch = "";
 
-            while (basePathsToXlms.Length > lastPathTaken)
+            while (basePathsToXlms.Length > StaticDataBase.lastPathTaken)
             {
-                if (amountOfThreads <= howManyThreadDoIWant)
+                if (StaticDataBase.amountOfThreads <= StaticDataBase.howManyThreadDoIWant)
                 {
                     new Thread(CheckPictures).Start();
-                    amountOfThreads++;
+                    StaticDataBase.amountOfThreads++;
                 }
             }
+            StaticDataBase.lastPathTaken = 0;
+            
         }
 
         public void CheckPictures()
         {
             string myPath = "";
-            if (lastPathTaken < basePathsToXlms.Length)
+            if (StaticDataBase.lastPathTaken < basePathsToXlms.Length)
             {
-                myPath = basePathsToXlms[lastPathTaken++];
+                myPath = basePathsToXlms[StaticDataBase.lastPathTaken++];
             }
 
             if (myPath != "")
             {
-                lastPathTaken++;
+                StaticDataBase.lastPathTaken++;
                 List<CreateDataBase.AdvantedList> buffAdvantedList;
                 buffAdvantedList = gettingDataFromXml(myPath);
-                Image<Bgr, Byte> buffImgBgr = LoadImage(pathToSelectedFoto);
+                Image<Bgr, Byte> buffImgBgr = LoadImage(StaticDataBase.pathToSelectedFoto);
                 byte[] buffForArray;
                 Image<Gray, Byte> buffImgGray;
                 byte[] buffForXmlArray;
                 buffImgGray = UseFilters(buffImgBgr);
-                buffImgGray = buffImgGray.Resize(resizeXInPixels, resizeYInPixels, Inter.Cubic);
+                buffImgGray = buffImgGray.Resize(StaticDataBase.resizeXInPixels, StaticDataBase.resizeYInPixels, Inter.Cubic);
                 buffImgBgr.Dispose();
                 Image<Gray, Byte> buffImgGrayInside = new Image<Gray, byte>(buffImgGray.Width, buffImgGray.Height, new Gray(255));
                 Image<Gray, Byte> buffImgGrayRotated = new Image<Gray, byte>(buffImgGray.Width, buffImgGray.Height, new Gray(255));
@@ -107,12 +99,12 @@ namespace SignLanguageTranslator
                     buffImgGrayInside = buffImgGray;
                     buffForXmlArray = buffAdvantedList[indexTypes].allTypesOfSign;
 
-                    for (int indexRotation = -maxRotation; indexRotation <= maxRotation; indexRotation++)
+                    for (int indexRotation = -StaticDataBase.maxRotation; indexRotation <= StaticDataBase.maxRotation; indexRotation+=StaticDataBase.howManyRadiansPerLoop)
                     {
 
                         buffImgGrayRotated = RotateGray(buffImgGray, indexRotation);
 
-                        for (double indexZoom = (1 - maxZoom); indexZoom <= (1 + maxZoom); indexZoom += 0.02)
+                        for (double indexZoom = (1 - StaticDataBase.maxZoom); indexZoom <= (1 + StaticDataBase.maxZoom); indexZoom += StaticDataBase.howMuchZoomPerLoop)
                         {
                             buffImgGrayZoomed = buffImgGrayRotated;
 
@@ -122,7 +114,7 @@ namespace SignLanguageTranslator
 
                             buffForArray = makBinaryFromByte(buffImgGrayInside.Bytes);
 
-                            arraysOfPrabability(buffForArray, buffForXmlArray, maxReach, myPath);
+                            arraysOfPrabability(buffForArray, buffForXmlArray, StaticDataBase.maxReach, myPath);
                             
                             
                         }
@@ -131,7 +123,7 @@ namespace SignLanguageTranslator
                 buffImgBgr.Dispose();
                 
             }
-            amountOfThreads--;
+            StaticDataBase.amountOfThreads--;
             
         }
 
@@ -272,7 +264,7 @@ namespace SignLanguageTranslator
         {
             //wstawka że jeśli firsDobleArray.Lenght = 0 to wywala błąd
 
-            for (int indexOutside = -reach; indexOutside <= reach; indexOutside++)
+            for (int indexOutside = -reach; indexOutside <= reach; indexOutside+=StaticDataBase.howMuchReachForLoop)
             {
                 double allProbabilitiesSummed = 0;
                 int howManyHandBytes = 0;
@@ -295,12 +287,12 @@ namespace SignLanguageTranslator
                         }
                     }
                 }
-                if ((allProbabilitiesSummed/howManyHandBytes) > bestMatchProcent)
+                if ((allProbabilitiesSummed/howManyHandBytes) > StaticDataBase.bestMatchProcent)
                 {
                     lock (this)
                     {
-                        bestMatchProcent = allProbabilitiesSummed / howManyHandBytes;
-                        nameOfBestMatch = myPath[myPath.Length - 5].ToString();
+                        StaticDataBase.bestMatchProcent = allProbabilitiesSummed / howManyHandBytes;
+                        StaticDataBase.nameOfBestMatch = myPath[myPath.Length - 5].ToString();
                     }
                 }
             }

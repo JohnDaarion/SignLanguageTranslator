@@ -82,7 +82,7 @@ namespace SignLanguageTranslator
             //img_grey = img_grey.Rotate(180, new Gray(0), false); rotation
             //resizeTest = img_grey.Resize(1+resizeWalue, Inter.Cubic);
             //resizeTest.ROI = new Rectangle((int)(resizeTest.Width*(resizeWalue*0.5)), (int)(resizeTest.Width * (resizeWalue * 1.5)), 50, 50);
-            img_grey = img_grey.Resize(10, 13, Inter.Cubic);
+            img_grey = img_grey.Resize(StaticDataBase.resizeXInPixels, StaticDataBase.resizeYInPixels, Inter.Cubic);
 
             //resizeTest = ZoomGray(resizeTest, 1.2);
             //resizeTest.ROI = new Rectangle(0, 0, 50, 50);
@@ -111,6 +111,7 @@ namespace SignLanguageTranslator
 
         private void openFolderButton_Click(object sender, EventArgs e)
         {
+            dialogLabel.Text = "Started";
             FolderBrowserDialog fdb = new FolderBrowserDialog();
             if (fdb.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
@@ -127,8 +128,8 @@ namespace SignLanguageTranslator
         private void button1_Click(object sender, EventArgs e)
         {
             //SignToLetterClass sC = new SignToLetterClass(openFileDialog.FileName);
-            labelForProcents.Text = SignToLetterClass.bestMatchProcent.ToString();
-            labelForrResult.Text = SignToLetterClass.nameOfBestMatch;
+            labelForProcents.Text = StaticDataBase.bestMatchProcent.ToString();
+            labelForrResult.Text = StaticDataBase.nameOfBestMatch;
         }
     }
 }
