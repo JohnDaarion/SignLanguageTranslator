@@ -13,9 +13,9 @@ using System.Xml.Serialization;
 
 namespace SignLanguageTranslator
 {
-   public class CreateDataBase
+   public class CreateDataBase : CommonMethods
     {
-         public class AdvantedList
+         public class AdvantedList 
         {
             public byte[] allTypesOfSign;
             public int numberOfPhotosMerged = 0;
@@ -28,11 +28,26 @@ namespace SignLanguageTranslator
             }
             public AdvantedList() { }
         }
-        
+
+        public class BaseList
+        {
+            public double[] allTypesOfSign;
+            public int numberOfPhotosMerged = 0;
+
+
+            public BaseList(double[] _allTypesOfSign, int _numberOfPhotosMerged)
+            {
+                allTypesOfSign = _allTypesOfSign;
+                numberOfPhotosMerged = _numberOfPhotosMerged;
+            }
+            public BaseList() { }
+        }
+
         string[] filePaths;
         string folderName = "";
         double procentOfSimilarityOfPicturesInFraction = 0.95;
-        public string pathForSavingXml = "D:\\dokumenty\\Visual Studio 2015\\Projects\\SignLanguageTranslator\\SignLanguageTranslator\\bin\\x64\\Debug\\baseData";
+        public string pathForSavingXml = System.IO.Path.GetDirectoryName(Application.ExecutablePath) + "\\baseData";
+        public string pathForSavingXmlDouble = System.IO.Path.GetDirectoryName(Application.ExecutablePath) + "\\baseDataDouble";
 
         public CreateDataBase(string path)
         {
@@ -41,43 +56,6 @@ namespace SignLanguageTranslator
             folderName = path[path.Length - 1].ToString();
         }
         
-
-
-        Image<Bgr, Byte> LoadImage(string pathTaken)
-        {
-            return new Image<Bgr, Byte>(pathTaken);
-        }
-
-      
-
-        Image<Gray, Byte> useFilters(Image<Bgr, Byte> _img)
-        {
-            int Blue_threshold = 100;
-            int Green_threshold = 0;
-            int Red_threshold = 100;
-            Image<Gray, Byte> imgBuff = new Image<Gray, byte>(_img.Width, _img.Height, new Gray(255));
-            Image<Bgr, Byte> img; 
-            img = _img;
-
-
-            
-                img = img.ThresholdBinary(new Bgr(Blue_threshold, Green_threshold, Red_threshold), new Bgr(255, 255, 255));
-
-                CvInvoke.CvtColor(img, imgBuff, ColorConversion.Bgr2Gray);
-
-                imgBuff = imgBuff.ThresholdBinary(new Gray(200), new Gray(255));
-                imgBuff = imgBuff.Resize(StaticDataBase.resizeXInPixels, StaticDataBase.resizeYInPixels, Inter.Cubic);
-
-            
-           
-                _img.Dispose();
-                img.Dispose();
-            
-            return imgBuff;
-        }
-
-
-
 
         double arraysOfPrabability(byte[] firstDoubleArray, byte[] secondDoubleArray)
         {
@@ -140,11 +118,14 @@ namespace SignLanguageTranslator
         {
             List <AdvantedList> buffList = new List <AdvantedList>();
             List<byte[]> buffDoubleList = new List<byte[]>();
+            Image<Gray, Byte> imgGray = new Image<Gray, byte>(StaticDataBase.resizeXInPixels, StaticDataBase.resizeYInPixels, new Gray(0));
 
 
             for (int index = 0; index < filePaths.Length; index++)
             {
-                buffDoubleList.Add(makeDoubleFromBytes(useFilters(LoadImage(filePaths[index]))));
+                imgGray = UseFilters(LoadImage(filePaths[index]));
+                imgGray = DropZeros(imgGray);
+                buffDoubleList.Add(makeDoubleFromBytes(imgGray));
             }
 
             if (buffList.Count == 0)
@@ -176,7 +157,21 @@ namespace SignLanguageTranslator
             
             return buffList;
         }
-        
+
+        double[] AddProbabilities(double[] buffDouble, byte[] buffByte, int doublesAlready)
+        {
+            int buffInt = 0;
+            buffInt = doublesAlready;
+            double[] buffDoubleInner = new double[StaticDataBase.resizeXInPixels * StaticDataBase.resizeYInPixels];
+            buffDoubleInner = buffDouble;
+                
+
+            for (int index = 0; index < (StaticDataBase.resizeXInPixels * StaticDataBase.resizeYInPixels); index++)
+            {
+                buffDoubleInner[index] = ((((double)buffDouble[index] * (double)(buffInt)) / (double)(buffInt+1)) + (double)((double)buffByte[index] / (double)(buffInt+1)));
+            }
+            return buffDoubleInner;
+        }
 
         void XmlSerialization(List<AdvantedList> _object)
         {
@@ -192,9 +187,46 @@ namespace SignLanguageTranslator
         
         public void UseClassMethods()
         {
-
             XmlSerialization(MakeListOfBytedPictures());
         }
 
+        public void UseClassMethodsDouble()
+        {
+            XmlSerializationDouble(MakeDoubleList());
+        }
+
+        public BaseList MakeDoubleList()
+        {
+            
+            double[] buffDoubleList =new double[StaticDataBase.resizeXInPixels* StaticDataBase.resizeYInPixels];
+            Image<Gray, Byte> imgGray = new Image<Gray, byte>(StaticDataBase.resizeXInPixels, StaticDataBase.resizeYInPixels, new Gray(StaticDataBase.maxGrayThreshold));
+            
+
+            for (int index = 0; index < filePaths.Length; index++)
+            {
+                imgGray = UseFilters(LoadImage(filePaths[index]));
+                imgGray = DropZeros(imgGray);
+
+
+                buffDoubleList = AddProbabilities(buffDoubleList,makeDoubleFromBytes(imgGray),index);
+            }
+
+            return new SignLanguageTranslator.CreateDataBase.BaseList(buffDoubleList,filePaths.Length);
+        }
+
+        void XmlSerializationDouble(BaseList _object)
+        {
+            XmlSerializer serializer = new XmlSerializer(_object.GetType());
+
+            Stream fs = new FileStream(pathForSavingXml + "\\" + folderName + ".xml", FileMode.Create);
+            XmlWriter writer = new XmlTextWriter(fs, Encoding.Unicode);
+
+            serializer.Serialize(fs, _object);
+            fs.Close();
+
+        }
+
     }
+
+
 }

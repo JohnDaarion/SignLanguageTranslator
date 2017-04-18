@@ -12,17 +12,21 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace SignLanguageTranslator
+namespace SignLanguageTranslator 
 {
-    public class SignToLetterClass
+    public class SignToLetterClass : CommonMethods
     {
 
         public SignToLetterClass(string selectedFotoPath)
         {
             StaticDataBase.pathToSelectedFoto = selectedFotoPath;
+            
         }
 
-        
+        public SignToLetterClass()
+        {}
+
+
         public string[] basePathsToXlms = Directory.GetFileSystemEntries(StaticDataBase.pathToFolderWithXmls);
 
 
@@ -34,6 +38,7 @@ namespace SignLanguageTranslator
             XmlSerializer serializer = new XmlSerializer(typeof(List<CreateDataBase.AdvantedList>));
             List<CreateDataBase.AdvantedList> buffAL;
 
+
             FileStream fs = new FileStream(path, FileMode.Open);
             XmlReader reader = XmlReader.Create(fs);
 
@@ -43,20 +48,28 @@ namespace SignLanguageTranslator
             return buffAL;
         }
 
-        Image<Bgr, Byte> LoadImage(string pathTaken)
+        public CreateDataBase.BaseList gettingDataFromXmlDouble(string path)
         {
-            return new Image<Bgr, Byte>(pathTaken);
+            XmlSerializer serializer = new XmlSerializer(typeof(CreateDataBase.BaseList));
+            CreateDataBase.BaseList buffAL;
+
+
+            FileStream fs = new FileStream(path, FileMode.Open);
+            XmlReader reader = XmlReader.Create(fs);
+
+            buffAL = (CreateDataBase.BaseList)serializer.Deserialize(reader);
+            reader.Dispose();
+            fs.Close();
+            return buffAL;
         }
 
-        Image<Gray, Byte> LoadImageGray(string pathTaken)
-        {
-            return new Image<Gray, Byte>(pathTaken);
-        }
 
         public void CheckItAll()
         {
-            StaticDataBase.bestMatchProcent = 0;
-            StaticDataBase.nameOfBestMatch = "";
+            StaticDataBase sDB = new StaticDataBase();
+            StaticDataBase.BestMatchProcent = 0;
+            sDB.NameOfBestMatch = "";
+            
 
             while (basePathsToXlms.Length > StaticDataBase.lastPathTaken)
             {
@@ -65,9 +78,54 @@ namespace SignLanguageTranslator
                     new Thread(CheckPictures).Start();
                     StaticDataBase.amountOfThreads++;
                 }
+                if (StaticDataBase.amountOfThreads == StaticDataBase.howManyThreadDoIWant)
+                {
+                    Thread.Sleep(1000);
+                }
             }
             StaticDataBase.lastPathTaken = 0;
             
+        }
+
+        public void CheckItAllCamera()
+        {
+            StaticDataBase sDB = new StaticDataBase();
+            StaticDataBase.BestMatchProcent = 0;
+            sDB.NameOfBestMatch = "";
+
+            while (basePathsToXlms.Length > StaticDataBase.lastPathTaken)
+            {
+                if (StaticDataBase.amountOfThreads < StaticDataBase.howManyThreadDoIWant)
+                {
+                    StaticDataBase.amountOfThreads++;
+                    new Thread(CheckPicturesFromCamera).Start();
+                    
+                }
+                if (StaticDataBase.amountOfThreads == StaticDataBase.howManyThreadDoIWant)
+                {
+                    Thread.Sleep(1000);
+                }
+            }
+            StaticDataBase.lastPathTaken = 0;
+
+        }
+
+        public void CheckItAllByte()
+        {
+            StaticDataBase sDB = new StaticDataBase();
+            StaticDataBase.BestMatchProcent = 0;
+            sDB.NameOfBestMatch = "";
+
+            while (basePathsToXlms.Length > StaticDataBase.lastPathTaken)
+            {
+                if (StaticDataBase.amountOfThreads <= StaticDataBase.howManyThreadDoIWant)
+                {
+                    new Thread(CheckPicturesByte).Start();
+                    StaticDataBase.amountOfThreads++;
+                }
+            }
+            StaticDataBase.lastPathTaken = 0;
+
         }
 
         public void CheckPictures()
@@ -80,26 +138,166 @@ namespace SignLanguageTranslator
 
             if (myPath != "")
             {
-                StaticDataBase.lastPathTaken++;
-                List<CreateDataBase.AdvantedList> buffAdvantedList;
-                buffAdvantedList = gettingDataFromXml(myPath);
+                //StaticDataBase.lastPathTaken++;
+                CreateDataBase.BaseList buffAdvantedList;
+                buffAdvantedList = gettingDataFromXmlDouble(myPath);
                 Image<Bgr, Byte> buffImgBgr = LoadImage(StaticDataBase.pathToSelectedFoto);
                 byte[] buffForArray;
                 Image<Gray, Byte> buffImgGray;
-                byte[] buffForXmlArray;
+                double[] buffForXmlArray;
                 buffImgGray = UseFilters(buffImgBgr);
                 buffImgGray = buffImgGray.Resize(StaticDataBase.resizeXInPixels, StaticDataBase.resizeYInPixels, Inter.Cubic);
+                buffImgGray = DropZeros(buffImgGray);
+                
                 buffImgBgr.Dispose();
                 Image<Gray, Byte> buffImgGrayInside = new Image<Gray, byte>(buffImgGray.Width, buffImgGray.Height, new Gray(255));
                 Image<Gray, Byte> buffImgGrayRotated = new Image<Gray, byte>(buffImgGray.Width, buffImgGray.Height, new Gray(255));
                 Image<Gray, Byte> buffImgGrayZoomed = new Image<Gray, byte>(buffImgGray.Width, buffImgGray.Height, new Gray(255));
+                
+
+                for (int indexTypes = 0; indexTypes < 1/*11buffAdvantedList.Count*/; indexTypes++)
+                {
+                    buffImgGrayInside = buffImgGray;
+                    buffForXmlArray = buffAdvantedList.allTypesOfSign; //11buffAdvantedList[indexTypes].allTypesOfSign;
+
+                    for (double indexRotation = -StaticDataBase.maxRotation; indexRotation <= StaticDataBase.maxRotation; indexRotation+=StaticDataBase.howManyRadiansPerLoop)
+                    {
+
+                        buffImgGrayRotated = RotateGray(buffImgGray, indexRotation);
+
+                        for (double indexZoom = (1 - StaticDataBase.maxZoom); indexZoom <= (1 + StaticDataBase.maxZoom); indexZoom += StaticDataBase.howMuchZoomPerLoop)
+                        {
+                            buffImgGrayZoomed = buffImgGrayRotated;
+
+                            buffImgGrayZoomed = ZoomGray(buffImgGrayZoomed, indexZoom);
+
+                            //buffImgGrayInside = buffImgGrayInside.Resize(resizeXInPixels, resizeYInPixels, Inter.Cubic);
+
+                            buffForArray = makBinaryFromByte(buffImgGrayInside.Bytes);
+
+                            arraysOfPrababilityDouble(buffForArray, buffForXmlArray, StaticDataBase.maxReach, myPath);
+                            
+                            
+                        }
+                    }
+                }
+                buffImgBgr.Dispose();
+                
+            }
+            StaticDataBase.amountOfThreads--;
+            
+        }
+
+        public void CheckPicturesFromCamera()
+        {
+            string myPath = "";
+            if (StaticDataBase.lastPathTaken < basePathsToXlms.Length)
+            {
+                myPath = basePathsToXlms[StaticDataBase.lastPathTaken++];
+            }
+
+            if (myPath != "")
+            {
+
+                //lock (StaticDataBase.pictureFromCamera)
+                {
+                    Image<Bgr, Byte> buffImgBgr = new Image<Bgr, byte>(StaticDataBase.pictureFromCamera.Width, StaticDataBase.pictureFromCamera.Height);
+                    //buffImgBgr = buffImgBgr.Resize(StaticDataBase.resizeXInPixels, StaticDataBase.resizeYInPixels, Inter.Cubic);
+                    buffImgBgr = StaticDataBase.pictureFromCamera;
+                    List<CreateDataBase.AdvantedList> buffAdvantedList;
+                    buffAdvantedList = gettingDataFromXml(myPath);
+                    byte[] buffForArray;
+                    Image<Gray, Byte> buffImgGray;
+                    byte[] buffForXmlArray;
+
+
+                    buffImgGray = UseFilters(buffImgBgr);
+                    buffImgGray = buffImgGray.Resize(StaticDataBase.resizeXInPixels, StaticDataBase.resizeYInPixels, Inter.Cubic);
+                    buffImgGray = DropZeros(buffImgGray);
+                
+                //buffImgBgr.Dispose();
+
+                //buffImgBgr.Dispose();
+                Image<Gray, Byte> buffImgGrayInside = new Image<Gray, byte>(buffImgGray.Width, buffImgGray.Height, new Gray(255));
+                Image<Gray, Byte> buffImgGrayRotated = new Image<Gray, byte>(buffImgGray.Width, buffImgGray.Height, new Gray(255));
+                Image<Gray, Byte> buffImgGrayZoomed = new Image<Gray, byte>(buffImgGray.Width, buffImgGray.Height, new Gray(255));
+
+
+
+                    for (int indexTypes = 0; indexTypes < buffAdvantedList.Count; indexTypes++)
+                    {
+                        buffImgGrayInside = buffImgGray;
+                        buffForXmlArray = buffAdvantedList[indexTypes].allTypesOfSign;
+
+                        for (double indexRotation = -StaticDataBase.maxRotation; indexRotation <= StaticDataBase.maxRotation; indexRotation += StaticDataBase.howManyRadiansPerLoop)
+                        {
+
+                            buffImgGrayRotated = RotateGray(buffImgGray, indexRotation);
+
+                            for (double indexZoom = (1 - StaticDataBase.maxZoom); indexZoom <= (1 + StaticDataBase.maxZoom); indexZoom += StaticDataBase.howMuchZoomPerLoop)
+                            {
+                                buffImgGrayZoomed = buffImgGrayRotated;
+
+                                buffImgGrayZoomed = ZoomGray(buffImgGrayZoomed, indexZoom);
+
+                                //buffImgGrayInside = buffImgGrayInside.Resize(resizeXInPixels, resizeYInPixels, Inter.Cubic);
+
+                                buffForArray = makBinaryFromByte(buffImgGrayInside.Bytes);
+
+                                arraysOfPrabability(buffForArray, buffForXmlArray, StaticDataBase.maxReach, myPath);
+
+
+                            }
+                        }
+
+
+                    }
+            }
+            
+
+            }
+            StaticDataBase.amountOfThreads--;
+
+        }
+
+
+
+        public void CheckPicturesByte()
+        {
+            string myPath = "";
+
+            if (StaticDataBase.lastPathTaken < basePathsToXlms.Length)
+            {
+                myPath = basePathsToXlms[StaticDataBase.lastPathTaken++];
+            }
+
+            if (myPath != "")
+            {
+                //StaticDataBase.lastPathTaken++;
+                List<CreateDataBase.AdvantedList> buffAdvantedList;
+                buffAdvantedList = gettingDataFromXml(myPath);
+                Image<Bgr, Byte> buffImgBgr = LoadImage(StaticDataBase.pathToSelectedFoto);
+                buffImgBgr = buffImgBgr.Resize(StaticDataBase.resizeXInPixels, StaticDataBase.resizeYInPixels, Inter.Cubic);
+                byte[] buffForArray;
+                Image<Gray, Byte> buffImgGray;
+                byte[] buffForXmlArray;
+
+                buffImgGray = UseFilters(buffImgBgr);
+                buffImgGray = buffImgGray.Resize(StaticDataBase.resizeXInPixels, StaticDataBase.resizeYInPixels, Inter.Cubic);
+                buffImgGray = DropZeros(buffImgGray);
+
+                buffImgBgr.Dispose();
+                Image<Gray, Byte> buffImgGrayInside = new Image<Gray, byte>(buffImgGray.Width, buffImgGray.Height, new Gray(255));
+                Image<Gray, Byte> buffImgGrayRotated = new Image<Gray, byte>(buffImgGray.Width, buffImgGray.Height, new Gray(255));
+                Image<Gray, Byte> buffImgGrayZoomed = new Image<Gray, byte>(buffImgGray.Width, buffImgGray.Height, new Gray(255));
+
 
                 for (int indexTypes = 0; indexTypes < buffAdvantedList.Count; indexTypes++)
                 {
                     buffImgGrayInside = buffImgGray;
                     buffForXmlArray = buffAdvantedList[indexTypes].allTypesOfSign;
 
-                    for (int indexRotation = -StaticDataBase.maxRotation; indexRotation <= StaticDataBase.maxRotation; indexRotation+=StaticDataBase.howManyRadiansPerLoop)
+                    for (double indexRotation = -StaticDataBase.maxRotation; indexRotation <= StaticDataBase.maxRotation; indexRotation += StaticDataBase.howManyRadiansPerLoop)
                     {
 
                         buffImgGrayRotated = RotateGray(buffImgGray, indexRotation);
@@ -115,16 +313,16 @@ namespace SignLanguageTranslator
                             buffForArray = makBinaryFromByte(buffImgGrayInside.Bytes);
 
                             arraysOfPrabability(buffForArray, buffForXmlArray, StaticDataBase.maxReach, myPath);
-                            
-                            
+
+
                         }
                     }
                 }
                 buffImgBgr.Dispose();
-                
+
             }
             StaticDataBase.amountOfThreads--;
-            
+
         }
 
         /* Nieużywana
@@ -275,50 +473,34 @@ namespace SignLanguageTranslator
                     if ((index + indexOutside) >= 0 && (index + indexOutside) < firstDoubleArray.Length)
                     {
 
-                        if (firstDoubleArray[index] <= secondDoubleArray[index + indexOutside] && secondDoubleArray[index + indexOutside] != 0)
+                        if (firstDoubleArray[index] == secondDoubleArray[index + indexOutside]) //&& ((secondDoubleArray[index + indexOutside] != 0) && (firstDoubleArray[index])!=0))
                         {
-                            allProbabilitiesSummed += (firstDoubleArray[index] / secondDoubleArray[index + indexOutside]);
+                            //2 allProbabilitiesSummed += (firstDoubleArray[index] / secondDoubleArray[index + indexOutside]);
+                            allProbabilitiesSummed++;
                             howManyHandBytes++;
                         }
-                        if (firstDoubleArray[index] > secondDoubleArray[index + indexOutside] && firstDoubleArray[index] != 0)
+                        else
                         {
-                            allProbabilitiesSummed += (secondDoubleArray[index + indexOutside] / firstDoubleArray[index]);
                             howManyHandBytes++;
                         }
+                        /*if (firstDoubleArray[index] > secondDoubleArray[index + indexOutside] )
+                        {
+                            //2 allProbabilitiesSummed += (secondDoubleArray[index + indexOutside] / firstDoubleArray[index]);
+                            //2allProbabilitiesSummed--;
+                            howManyHandBytes++;
+                        }*/
                     }
                 }
-                if ((allProbabilitiesSummed/howManyHandBytes) > StaticDataBase.bestMatchProcent)
+                if ((allProbabilitiesSummed/howManyHandBytes) > StaticDataBase.BestMatchProcent)
                 {
                     lock (this)
                     {
-                        StaticDataBase.bestMatchProcent = allProbabilitiesSummed / howManyHandBytes;
-                        StaticDataBase.nameOfBestMatch = myPath[myPath.Length - 5].ToString();
+                        StaticDataBase sDB = new StaticDataBase();
+                        StaticDataBase.BestMatchProcent = allProbabilitiesSummed / howManyHandBytes;
+                        sDB.NameOfBestMatch = myPath[myPath.Length - 5].ToString();
                     }
                 }
             }
-        }
-
-
-
-
-        Image<Gray, Byte> UseFilters(Image<Bgr, Byte> _img)
-        {
-            int Blue_threshold = 100;
-            int Green_threshold = 0;
-            int Red_threshold = 100;
-            
-            Image<Gray, Byte> imgGray = new Image<Gray, byte>(_img.Width, _img.Height, new Gray(255));
-            
-           
-
-                _img = _img.ThresholdBinary(new Bgr(Blue_threshold, Green_threshold, Red_threshold), new Bgr(255, 255, 255));
-                CvInvoke.CvtColor(_img, imgGray, ColorConversion.Bgr2Gray);
-                imgGray = imgGray.ThresholdBinary(new Gray(200), new Gray(255));
-                //imgGray = imgGray.Resize(resizeXInPixels, resizeYInPixels, Inter.Cubic);
-
-            _img.Dispose();
-            
-            return imgGray;
         }
 
         byte[] makBinaryFromByte(byte[] _buffBytes)
@@ -330,6 +512,51 @@ namespace SignLanguageTranslator
                 buffByte[indexOfInternalLoop] = (byte)(_buffBytes[indexOfInternalLoop] / 255);
             }
             return buffByte;
+        }
+
+        void arraysOfPrababilityDouble(byte[] firstDoubleArray, double[] secondDoubleArray, int reach, string myPath)
+        {
+            //wstawka że jeśli firsDobleArray.Lenght = 0 to wywala błąd
+
+            for (int indexOutside = -reach; indexOutside <= reach; indexOutside += StaticDataBase.howMuchReachForLoop)
+            {
+                double allProbabilitiesSummed = 0;
+                int howManyHandBytes = 0;
+
+                for (int index = 0; index < firstDoubleArray.Length; index++)
+                {
+
+                    if ((index + indexOutside) >= 0 && (index + indexOutside) < firstDoubleArray.Length)
+                    {
+
+                        if (firstDoubleArray[index] == 1) //&& ((secondDoubleArray[index + indexOutside] != 0) && (firstDoubleArray[index])!=0))
+                        {
+                            //2 allProbabilitiesSummed += (firstDoubleArray[index] / secondDoubleArray[index + indexOutside]);
+                            allProbabilitiesSummed+= secondDoubleArray[index];
+                            howManyHandBytes++;
+                        }
+                        else
+                        {
+                            howManyHandBytes++;
+                        }
+                        /*if (firstDoubleArray[index] > secondDoubleArray[index + indexOutside] )
+                        {
+                            //2 allProbabilitiesSummed += (secondDoubleArray[index + indexOutside] / firstDoubleArray[index]);
+                            //2allProbabilitiesSummed--;
+                            howManyHandBytes++;
+                        }*/
+                    }
+                }
+                if ((allProbabilitiesSummed / howManyHandBytes) > StaticDataBase.BestMatchProcent)
+                {
+                    lock (this)
+                    {
+                        StaticDataBase sDB = new StaticDataBase();
+                        StaticDataBase.BestMatchProcent = allProbabilitiesSummed / howManyHandBytes;
+                        sDB.NameOfBestMatch = myPath[myPath.Length - 5].ToString();
+                    }
+                }
+            }
         }
     }
 }

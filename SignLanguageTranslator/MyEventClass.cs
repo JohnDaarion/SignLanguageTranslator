@@ -6,8 +6,12 @@ using System.Threading.Tasks;
 
 namespace SignLanguageTranslator
 {
-    public class MyEventClass
+    class MyEventClass
     {
-        public delegate void Testy(MyEventClass MEC, EventArgs e);
+        public void OnDataChanged(object source, EventArgs args)
+        {
+
+
+        }
     }
 }
