@@ -9,7 +9,6 @@ D:\dokumenty\Visual Studio 2015\Projects\SignLanguageTranslator\SignLanguageTran
 D:\dokumenty\Visual Studio 2015\Projects\SignLanguageTranslator\SignLanguageTranslator\bin\x64\Release\Emgu.CV.UI.dll
 D:\dokumenty\Visual Studio 2015\Projects\SignLanguageTranslator\SignLanguageTranslator\bin\x64\Release\Emgu.CV.UI.GL.dll
 D:\dokumenty\Visual Studio 2015\Projects\SignLanguageTranslator\SignLanguageTranslator\bin\x64\Release\Emgu.CV.World.dll
-D:\dokumenty\Visual Studio 2015\Projects\SignLanguageTranslator\SignLanguageTranslator\bin\x64\Release\ZedGraph.dll
 D:\dokumenty\Visual Studio 2015\Projects\SignLanguageTranslator\SignLanguageTranslator\bin\x64\Release\Microsoft.VisualStudio.DebuggerVisualizers.dll
 D:\dokumenty\Visual Studio 2015\Projects\SignLanguageTranslator\SignLanguageTranslator\bin\x64\Release\Emgu.CV.UI.xml
 D:\dokumenty\Visual Studio 2015\Projects\SignLanguageTranslator\SignLanguageTranslator\bin\x64\Release\Emgu.CV.UI.GL.xml

@@ -54,6 +54,7 @@ namespace SignLanguageTranslator
 
             for (int index = 0; index < filePaths.Length; index++)
             {
+               
                 imgGray = UseFilters(LoadImage(filePaths[index]), StaticDataBase.resizeXInPixels, StaticDataBase.resizeYInPixels);
                 imgGray = DropZeros(imgGray);
                 buffDoubleList.Add(makeBinaryFromByte(imgGray.Bytes));

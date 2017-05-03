@@ -10,22 +10,19 @@ using System.Windows.Forms;
 namespace SignLanguageTranslator
 {
     public class StaticDataBase
-    {  
-        public static string pathToFolderWithXmls = System.IO.Path.GetDirectoryName(Application.ExecutablePath)+"\\baseData";
+    {
+        public static string pathToFolderWithXmls = System.IO.Path.GetDirectoryName(Application.ExecutablePath) + "\\baseData";
         public static int resizeXInPixels = 200;
         public static int resizeYInPixels = 250;
+
         public static string pathToSelectedFoto;
-        public static int lastPathTaken = 0;
         private static double bestMatchProcent = 0.0000001;
         private static string nameOfBestMatch = "";
-        public static double maxRotation = 0.1;
-        public static double maxZoom = 0.1; // range to 0-0.9 // jest to max zakres od 1
-        public static int maxReach = 1;//(int)(resizeXInPixels * resizeYInPixels * 0.01);
-        public static int amountOfThreads = 0;
-        public static int howManyThreadDoIWant = 2; 
-        public static double howManyRadiansPerLoop = 0.1;
+        public static double maxZoom = 0.1; 
+        public static int maxReach = 1;
         public static double howMuchZoomPerLoop = 0.5;
         public static int howMuchReachForLoop = 1;
+        public static bool isCameraWorking = false;
 
         //filters
         public static int Blue_threshold = 140;
@@ -45,7 +42,7 @@ namespace SignLanguageTranslator
         public static int mouseStopX = 2000;
         public static int mouseStopY = 2500;
 
-        public static Image<Bgr, Byte> pictureFromCamera;
+        private static Image<Bgr, Byte> pictureFromCamera = new Image<Bgr, byte>(100,100);
 
         public static bool galleryModeOn = false;
 
@@ -77,7 +74,20 @@ namespace SignLanguageTranslator
                 bestMatchProcent = value;
             }
         }
+        
+        public static Image<Bgr, byte> PictureFromCamera
+        {
+            get
+            {
+                return pictureFromCamera;
+            }
 
+            set
+            {
+                pictureFromCamera = value;
+            }
+        }
+    
         public delegate void DataChangedEventHandler(object source, EventArgs args);
         public static event DataChangedEventHandler DataChanged;
 
@@ -86,7 +96,5 @@ namespace SignLanguageTranslator
             if (DataChanged != null)
                 DataChanged(this, EventArgs.Empty);
         }
-
-
     }
 }

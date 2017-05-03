@@ -40,6 +40,7 @@
             this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
             this.labelForProcents = new System.Windows.Forms.Label();
             this.CameraButton = new System.Windows.Forms.Button();
+            this.NNButton = new System.Windows.Forms.Button();
             this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
             this.labelFilterOptions = new System.Windows.Forms.Label();
             this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
@@ -54,7 +55,6 @@
             this.labelForrResult = new System.Windows.Forms.Label();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
-            this.NNButton = new System.Windows.Forms.Button();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.resultImageBox)).BeginInit();
             this.tableLayoutPanel3.SuspendLayout();
@@ -218,6 +218,17 @@
             this.CameraButton.Text = "Start Camera";
             this.CameraButton.UseVisualStyleBackColor = true;
             this.CameraButton.Click += new System.EventHandler(this.CameraButton_Click);
+            // 
+            // NNButton
+            // 
+            this.NNButton.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.NNButton.Location = new System.Drawing.Point(3, 103);
+            this.NNButton.Name = "NNButton";
+            this.NNButton.Size = new System.Drawing.Size(90, 53);
+            this.NNButton.TabIndex = 8;
+            this.NNButton.Text = "NN";
+            this.NNButton.UseVisualStyleBackColor = true;
+            this.NNButton.Visible = false;
             // 
             // tableLayoutPanel5
             // 
@@ -397,17 +408,6 @@
             // openFileDialog
             // 
             this.openFileDialog.FileName = "fileToOpen";
-            // 
-            // NNButton
-            // 
-            this.NNButton.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.NNButton.Location = new System.Drawing.Point(3, 103);
-            this.NNButton.Name = "NNButton";
-            this.NNButton.Size = new System.Drawing.Size(90, 53);
-            this.NNButton.TabIndex = 8;
-            this.NNButton.Text = "NN";
-            this.NNButton.UseVisualStyleBackColor = true;
-            this.NNButton.Click += new System.EventHandler(this.NNButton_Click);
             // 
             // mainForm
             // 

@@ -1,5 +1,4 @@
-﻿using AForge.Neuro;
-using AForge.Neuro.Learning;
+﻿
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -116,6 +115,12 @@ namespace SignLanguageTranslator
 
         private void CameraButton_Click(object sender, EventArgs e)
         {
+            if (StaticDataBase.isCameraWorking == true)
+            {
+                StaticDataBase.isCameraWorking = false;
+                CameraButton.Text = "Start Camera";
+            }
+            else
             new Thread(useCamera).Start();
         }
 
@@ -184,12 +189,6 @@ namespace SignLanguageTranslator
             numericUpDown4.Value = StaticDataBase.maxBlueThreshold;
             numericUpDown5.Value = StaticDataBase.maxGreenThreshold;
             numericUpDown6.Value = StaticDataBase.maxRedThreshold;
-        }
-
-        private void NNButton_Click(object sender, EventArgs e)
-        {
-            NeuronNetwork NN = new NeuronNetwork();
-            NN.RunItMethod();
         }
     }
 }
